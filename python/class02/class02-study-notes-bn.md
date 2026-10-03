@@ -241,6 +241,7 @@ print(full_list)
 
 ```python
 print(sorted([3, 1, 2]))    # [1, 2, 3]
+print(sorted([3, 1, 2], reverse=True))     # [3,2,1]
 ```
 
 ### ৩.৮ ডেভঅপস উদাহরণ: আইপি সংগ্রহ
