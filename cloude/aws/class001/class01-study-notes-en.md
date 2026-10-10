@@ -71,22 +71,15 @@ Now, we enter **Infrastructure & Cloud Engineering**. We transition from running
 
 ### Today's Learning Journey
 
-```
-On-Premises Limitations (Hardware, Lead Time, CapEx)
-      ↓
-The Cloud Paradigm (OpEx, Pay-As-You-Go, Elasticity)
-      ↓
-AWS Global Architecture (Regions, Default us-east-1, Latency)
-      ↓
-Amazon EC2 Core Anatomy (AMI Blueprint, vCPU/RAM, EBS Volumes)
-      ↓
-Network Security (Security Groups, Inbound/Outbound Rules, Open Ports)
-      ↓
-Asymmetric Cryptography (SSH Key Pairs, chmod 400, Private vs Public Keys)
-      ↓
-Automated Bootstrapping (User Data, cloud-init, Non-interactive -y)
-      ↓
-Fleet Automation (Launch Templates, Versioning v1/v2/v3, Mass Deployment)
+```mermaid
+flowchart TD
+    A["1. On-Premises Limitations<br/>(Hardware Procurement, Lead Times, CapEx)"] --> B["2. The Cloud Paradigm<br/>(OpEx, Pay-As-You-Go, Elasticity)"]
+    B --> C["3. AWS Global Architecture<br/>(Regions, Default us-east-1, Latency Optimization)"]
+    C --> D["4. Amazon EC2 Core Anatomy<br/>(AMI Blueprint, vCPU vs RAM, EBS Volumes)"]
+    D --> E["5. Network Security & Firewalls<br/>(Security Groups, Inbound/Outbound, Port Rules)"]
+    E --> F["6. Asymmetric Cryptography<br/>(SSH Key Pairs, chmod 400, Private vs Public Keys)"]
+    F --> G["7. Automated Bootstrapping<br/>(User Data, cloud-init, Non-interactive -y flag)"]
+    G --> H["8. Fleet Automation<br/>(Launch Templates, Versioning v1/v2/v3, Mass Provisioning)"]
 ```
 
 ---
@@ -132,20 +125,22 @@ Historical enterprise workloads hosted on-premise include:
 
 Prominent hardware and private cloud vendors include **HPE GreenLake, Oracle Bare Metal Servers, NetForChoice, Joyent Triton, and Dell PowerEdge**.
 
-```
-Traditional On-Premises Architecture:
-┌────────────────────────────────────────────────────────┐
-│ Corporate Office Server Room                          │
-│                                                        │
-│  ┌────────────┐   ┌────────────┐   ┌────────────┐      │
-│  │ Server Rack│   │ SAN/NAS    │   │ Core       │      │
-│  │ (Physical) │   │ (Storage)  │   │ Switch/FW  │      │
-│  └──────┬─────┘   └──────┬─────┘   └──────┬─────┘      │
-│         │                │                │            │
-│  ───────┴────────────────┴────────────────┴──────────  │
-│  HVAC Cooling Systems | Diesel Generators | UPS Units  │
-│  Physical Access Badges | Fire Suppression Systems     │
-└────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Room["Corporate Office Server Room (On-Premises Infrastructure)"]
+        direction TB
+        subgraph Hardware["Physical Compute & Storage Racks"]
+            RACK["Physical Server Racks<br/>(Custom Physical Servers)"]
+            SAN["SAN / NAS Storage Arrays<br/>(Disk Storage Arrays)"]
+            NET["Core Switches & Hardware Firewalls<br/>(Cisco / Juniper Racks)"]
+        end
+        subgraph Facilities["Facilities & Environmental Controls"]
+            HVAC["Industrial HVAC Cooling Units<br/>(Temperature & Humidity Control)"]
+            POWER["UPS Battery Banks & Diesel Backup Generators<br/>(Redundant Power Grid)"]
+            SECURITY["Physical Biometric Access & Gas Fire Suppression"]
+        end
+        Hardware --- Facilities
+    end
 ```
 
 ### 3.2 The Four Fatal Bottlenecks of On-Premises
@@ -188,22 +183,19 @@ An **AWS Region** is a distinct, separate geographic area in the world where AWS
 - Every AWS Region is completely isolated from other regions. This design guarantees the highest possible fault tolerance, stability, and failure isolation.
 - Each Region contains **multiple Availability Zones (AZs)** (typically 3 or more). An AZ consists of one or more discrete physical data centers with redundant power, networking, and cooling, connected through low-latency fiber links.
 
-```
-AWS Global Infrastructure Hierarchy:
-┌─────────────────────────────────────────────────────────────────┐
-│ AWS Global Infrastructure                                       │
-│                                                                 │
-│   ┌─────────────────────────────────────────────────────────┐   │
-│   │ Region: ap-south-1 (Mumbai)                             │   │
-│   │                                                         │   │
-│   │   ┌───────────────┐  ┌───────────────┐  ┌─────────────┐ │   │
-│   │   │ AZ: ap-south-1a│  │ AZ: ap-south-1b│  │AZ:ap-south-1c││   │
-│   │   │ [Data Center] │  │ [Data Center] │  │[Data Center]││   │
-│   │   └───────────────┘  └───────────────┘  └─────────────┘ │   │
-│   │           ▲                  ▲                  ▲       │   │
-│   │           └────────── High-Speed Fiber ─────────┘       │   │
-│   └─────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Global["AWS Global Cloud Infrastructure"]
+        subgraph Region["AWS Region: ap-south-1 (Mumbai, India)"]
+            direction LR
+            AZ1["Availability Zone: ap-south-1a<br/>(Discrete Data Center 1)"]
+            AZ2["Availability Zone: ap-south-1b<br/>(Discrete Data Center 2)"]
+            AZ3["Availability Zone: ap-south-1c<br/>(Discrete Data Center 3)"]
+            AZ1 <-->|"Ultra-Low Latency Private Fiber"| AZ2
+            AZ2 <-->|"Ultra-Low Latency Private Fiber"| AZ3
+            AZ1 <-->|"Ultra-Low Latency Private Fiber"| AZ3
+        end
+    end
 ```
 
 ### 4.2 The Default Trap: Why us-east-1 is the "Kolatoli Beach" of AWS
@@ -246,17 +238,24 @@ The name originates from **E**lastic **C**ompute **C**loud (**E** with **two C's
 
 At its core, an **EC2 instance** is an on-demand virtual machine (VM) powered by modern virtualization hypervisors (historically Xen, now the cutting-edge **AWS Nitro System**).
 
-```
-Physical Hardware vs Virtualization (AWS Nitro Architecture):
-┌────────────────────────────────────────────────────────┐
-│ EC2 Instance 1 (t3.micro)  │ EC2 Instance 2 (c5.large) │
-│ [Guest OS: Ubuntu 24.04]   │ [Guest OS: Amazon Linux 2]│
-├────────────────────────────┴───────────────────────────┤
-│ AWS Nitro Hypervisor (Isolated Virtualization)         │
-├────────────────────────────────────────────────────────┤
-│ Physical Bare-Metal Server (Custom Intel/AMD/Graviton) │
-│ High-Density DDR5 RAM | High-Speed PCIe Bus            │
-└────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph VMs["Guest EC2 Virtual Machines"]
+        VM1["EC2 Instance 1 (t3.micro)<br/>Guest OS: Ubuntu 24.04 LTS"]
+        VM2["EC2 Instance 2 (c5.large)<br/>Guest OS: Amazon Linux 2023"]
+    end
+
+    subgraph Nitro["Virtualization Hypervisor Layer"]
+        HYPER["AWS Nitro Hypervisor<br/>(Hardware-Isolated Lightweight Virtualization & PCIe Offload Cards)"]
+    end
+
+    subgraph Physical["Physical Bare-Metal Hardware Infrastructure"]
+        HOST["AWS Custom Bare-Metal Server<br/>(Intel Xeon / AMD EPYC / AWS Graviton CPU + High-Density DDR5 RAM)"]
+    end
+
+    VM1 --> Nitro
+    VM2 --> Nitro
+    Nitro --> HOST
 ```
 
 ### 5.2 AMI (Amazon Machine Image): The Immutable OS Blueprint
@@ -304,23 +303,21 @@ c5.large  [ 4.0 GB RAM ] 2 vCPU (High Compute Clock) ($$$$)
 
 In class, the instructor emphasized an essential distinction that frequently trips up beginners: **Memory vs Storage**.
 
-```
-                ┌───────────────────────────────────┐
-                │          THE EC2 INSTANCE         │
-                │                                   │
-                │  ┌─────────────┐  ┌─────────────┐ │
-                │  │    vCPU     │  │  RAM/Memory │ │
-                │  │ (Execution) │  │ (Volatile)  │ │
-                │  └──────┬──────┘  └──────┬──────┘ │
-                └─────────┼────────────────┼────────┘
-                          │                │
-            Virtual PCIe  ▼                ▼
-       ┌────────────────────────────────────────┐
-       │   Amazon EBS Volume (Persistent Disk)  │
-       │   - 12 GB / 15 GB / 500 GB             │
-       │   - Survives instance reboot & stop    │
-       │   - Network-attached virtual HDD/SSD   │
-       └────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Instance["The EC2 Virtual Machine Architecture"]
+        direction LR
+        subgraph Compute["Compute & Memory (Ephemeral)"]
+            VCPU["vCPU Cores<br/>(Active Instruction Execution)"]
+            RAM["System RAM (Memory)<br/>(Volatile Workspace - Wiped on Stop)"]
+        end
+    end
+
+    subgraph Storage["Network-Attached Persistent Storage"]
+        EBS["Amazon EBS Volume (Virtual SSD - gp3)<br/>• Root Filesystem: /, /bin, /var, /home<br/>• Persists data across reboot and stop cycles"]
+    end
+
+    Instance <-->|"Virtual High-Speed PCIe / NVMe Bus"| Storage
 ```
 
 1. **System Memory (RAM):**
@@ -348,24 +345,22 @@ Key Architectural Characteristics:
 2. **Default Deny:** By default, a newly created security group blocks all incoming traffic from the public internet until explicit **Allow Rules** are added.
 3. **Hypervisor-Level Enforcement:** Security groups operate at the AWS network virtualization layer _outside_ the guest OS. Packets blocked by a security group never reach the instance's network card, shielding the CPU from malicious connection floods.
 
-```
-Incoming Internet Traffic
-          │
-          ▼
-┌──────────────────────────────────────────────┐
-│ AWS Security Group (Stateful Firewall)       │
-│                                              │
-│  Port 22  (SSH)   ──► ALLOW (My IP Only)    │
-│  Port 80  (HTTP)  ──► ALLOW (0.0.0.0/0)      │
-│  Port 443 (HTTPS) ──► ALLOW (0.0.0.0/0)      │
-│  Port 3306(MySQL) ──► DENY  (Blocked)        │
-└──────────────────────┬───────────────────────┘
-                       │ Allowed Packets
-                       ▼
-         ┌───────────────────────────┐
-         │       EC2 Instance        │
-         │     Ubuntu OS + Nginx     │
-         └───────────────────────────┘
+```mermaid
+flowchart TD
+    TRAFFIC["Incoming Internet Traffic"] --> SG
+
+    subgraph SG["AWS Security Group (Stateful Virtual Firewall)"]
+        direction TB
+        RULE1["Port 22 (SSH) ──► ALLOW (My IP Only: 103.xxx.xxx.xxx/32)"]
+        RULE2["Port 80 (HTTP) ──► ALLOW (0.0.0.0/0 Anywhere IPv4)"]
+        RULE3["Port 443 (HTTPS) ──► ALLOW (0.0.0.0/0 Anywhere IPv4)"]
+        RULE4["Port 3306 (MySQL) ──► DENY (Implicit Default Block)"]
+    end
+
+    RULE1 -->|"Permitted Packet"| EC2["EC2 Virtual Server<br/>(Ubuntu 24.04 LTS + Nginx Web Server)"]
+    RULE2 -->|"Permitted Packet"| EC2
+    RULE3 -->|"Permitted Packet"| EC2
+    RULE4 -.->|"Dropped at Hypervisor Layer"| DROP["Blocked / Dropped Traffic"]
 ```
 
 ### 6.2 Inbound Rules vs Outbound Rules
@@ -407,25 +402,26 @@ A fundamental tenet of DevOps and DevSecOps is the **Principle of Least Privileg
 
 AWS EC2 instances do not utilize insecure root passwords by default. Instead, access is authenticated using **Asymmetric Public-Key Cryptography (RSA)**:
 
-```
-               ┌───────────────────────────────┐
-               │    AWS Key Pair Generation    │
-               │    (e.g., nure-pc.pem)        │
-               └──────────────┬────────────────┘
-                              │
-             ┌────────────────┴────────────────┐
-             ▼                                 ▼
-   ┌───────────────────┐             ┌───────────────────┐
-   │    Private Key    │             │    Public Key     │
-   │    (nure-pc.pem)  │             │  (OpenSSH format) │
-   └─────────┬─────────┘             └─────────┬─────────┘
-             │ Stays on                        │ Injected by AWS
-             ▼ your computer                   ▼ into VM
-   ┌───────────────────┐             ┌───────────────────┐
-   │ Local Client      │   SSH       │ EC2 Remote Server │
-   │ (~/Downloads/)    ├────────────►│ ~/.ssh/           │
-   │ Private Key Stored│ Handshake   │ authorized_keys   │
-   └───────────────────┘             └───────────────────┘
+```mermaid
+flowchart TD
+    subgraph Gen["AWS Key Pair Generation Wizard"]
+        KEYPAIR["Key Pair Creation: nure-pc"]
+    end
+
+    subgraph Client["Local Developer Laptop (~/.ssh/)"]
+        PRIV["Private Key File: nure-pc.pem<br/>• chmod 400 (Owner Read-Only)<br/>• NEVER uploaded or transmitted over network!"]
+    end
+
+    subgraph AWSCloud["AWS Cloud Infrastructure"]
+        PUB["Public Key Component<br/>(OpenSSH Format)"]
+        SERVER["Remote EC2 Instance<br/>Automatically injected into:<br/>/home/ubuntu/.ssh/authorized_keys"]
+    end
+
+    KEYPAIR -->|"Downloaded once to local machine"| PRIV
+    KEYPAIR -->|"Retained by AWS"| PUB
+    PUB -->|"Injected on instance provisioning"| SERVER
+
+    PRIV <==>|"Encrypted SSH Cryptographic Handshake (Port 22)"| SERVER
 ```
 
 1. **The Private Key (`.pem` file):**
@@ -511,19 +507,13 @@ In traditional operations, an engineer launches a server, connects manually via 
 - It runs with full **`root` administrative privileges** (no interactive password prompts needed).
 - Execution output is logged to `/var/log/cloud-init-output.log` on the server for auditing and debugging.
 
-```
-EC2 Instance Launch Life Cycle:
-1. Provision Hypervisor VM
-      │
-2. Attach EBS Volume & Mount Root Filesystem
-      │
-3. Cloud-Init Service Starts
-      │
-4. Read User Data Script from Metadata (http://169.254.169.254/latest/user-data)
-      │
-5. Execute Script as Root (apt update -> install nginx -> start service)
-      │
-6. Web Server Up & Responding on Port 80!
+```mermaid
+flowchart TD
+    S1["1. Provision Hypervisor VM<br/>(Allocate vCPU cores and RAM slices on bare-metal)"] --> S2["2. Attach EBS Volume<br/>(Mount root filesystem to virtual block device)"]
+    S2 --> S3["3. cloud-init Service Initializes<br/>(Triggered on instance initial boot cycle)"]
+    S3 --> S4["4. Fetch User Data Script<br/>(Queried from IMDS: http://169.254.169.254/latest/user-data)"]
+    S4 --> S5["5. Execute Script as Root<br/>(apt update -y -> apt install nginx -y -> systemctl enable nginx)"]
+    S5 --> S6["6. Web Server Online & Serving Traffic!<br/>(Public IPv4 responds to HTTP requests on Port 80)"]
 ```
 
 ### 8.2 Writing the Bootstrap Bash Script
@@ -600,24 +590,17 @@ In class, the instructor used the vivid analogy of **Cupcake Baking Molds (ক�
 
 An **AWS Launch Template** is that exact industrial mold for your cloud infrastructure. You define every server specification once inside the template. Afterward, you simply tell AWS: _"Give me 50 instances from this template."_
 
-```
-                    ┌────────────────────────────┐
-                    │    AWS Launch Template     │
-                    │   (The "Cupcake Mold")     │
-                    │                            │
-                    │ - AMI: Ubuntu 24.04        │
-                    │ - Type: t3.large           │
-                    │ - Key: nure-pc.pem         │
-                    │ - Storage: 15 GB EBS       │
-                    │ - Script: Install Docker   │
-                    └─────────────┬──────────────┘
-                                  │
-         ┌────────────────────────┼────────────────────────┐
-         ▼                        ▼                        ▼
-┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│  Instance 1      │     │  Instance 2      │     │  Instance 50     │
-│  (Identical VM)  │     │  (Identical VM)  │     │  (Identical VM)  │
-└──────────────────┘     └──────────────────┘     └──────────────────┘
+```mermaid
+flowchart TD
+    subgraph Template["AWS Launch Template (The Standardized 'Cupcake Mold')"]
+        direction TB
+        SPEC["Configured Blueprint (v2 / v3):<br/>• AMI: Ubuntu 24.04 LTS<br/>• Instance Type: t3.large (2 vCPU, 8 GB RAM)<br/>• Key Pair: nure-pc.pem<br/>• Storage: 15 GB gp3 EBS Volume<br/>• User Data: Automated Nginx & Docker Setup Script"]
+    end
+
+    Template -->|"Concurrent Provisioning"| VM1["EC2 Instance 1<br/>(Identical Spec)"]
+    Template -->|"Concurrent Provisioning"| VM2["EC2 Instance 2<br/>(Identical Spec)"]
+    Template -->|"Concurrent Provisioning"| VM3["EC2 Instance ...<br/>(Identical Spec)"]
+    Template -->|"Concurrent Provisioning"| VMN["EC2 Instance 50<br/>(Identical Spec)"]
 ```
 
 ### 9.3 Building a Launch Template (Version 1)
